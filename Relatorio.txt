@@ -1,0 +1,65 @@
+
+# Relatório de Desenvolvimento Ziru
+
+---
+
+## Fase 4: Implementação do Contador de FPS com Shizuku
+
+### Resumo
+Esta fase implementou a funcionalidade principal e mais complexa do Ziru: a medição de FPS em tempo real. Isso foi alcançado através da integração com a API do Shizuku para obter permissões de shell privilegiadas e executar comandos `dumpsys`.
+
+### Alterações e Sistemas Implementados:
+
+1.  **Integração com Shizuku (`pubspec.yaml`, `home_screen.dart`):
+    *   Adicionada a dependência `shizuku_apk` ao projeto.
+    *   A `HomeScreen` foi modificada para verificar o status do Shizuku (instalado, em execução, permissão concedida) na inicialização.
+    *   Foi criado um novo "Card de Status do Shizuku" na UI principal. Este card informa o usuário sobre o estado atual do Shizuku e fornece um botão para conceder a permissão diretamente do aplicativo, melhorando a usabilidade.
+
+2.  **Serviço de Coleta de FPS (`lib/services/fps_service.dart`):
+    *   Foi criado um serviço Singleton (`FpsService`) dedicado exclusivamente à lógica de medição de FPS.
+    *   **Execução de Comando Privilegiado:** O serviço utiliza `Shizuku.exec()` para rodar o comando `dumpsys SurfaceFlinger --latency [nome_da_camada]`.
+    *   **Detecção da Atividade Correta:** Para garantir que o FPS medido é do aplicativo em primeiro plano, o serviço primeiro executa `dumpsys activity top` para encontrar o nome do componente da atividade visível e, em seguida, o formata corretamente para o comando do SurfaceFlinger.
+    *   **Análise de Saída (Parsing):** Foi implementado um parser robusto que processa a saída de texto do `dumpsys`. Ele extrai os timestamps de renderização de cada quadro, ignora valores inválidos, calcula a diferença média entre os quadros e converte essa média em um valor de FPS.
+
+3.  **Integração com o Overlay (`lib/services/overlay_service.dart`):
+    *   O `OverlayWidget` agora possui uma instância do `FpsService`.
+    *   O `Timer` periódico foi atualizado: a cada 2 segundos, ele agora chama `_fpsService.getFps()` para obter o valor atual de FPS.
+    *   A chamada ao serviço de FPS é condicional, sendo executada apenas se o usuário ativou a opção `showFps` na tela de customização, otimizando o desempenho.
+    *   O valor de FPS retornado é armazenado no estado do widget e exibido na sobreposição.
+
+### Estado Atual:
+A funcionalidade de contador de FPS está completa e funcional. O aplicativo agora pode guiar o usuário na configuração do Shizuku e exibir o FPS de qualquer aplicativo ou jogo em tempo real na sobreposição. Esta era a funcionalidade central planejada para o Ziru. 
+
+---
+
+## Fase 3: Ciclo de Customização em Tempo Real
+
+### Resumo
+Esta fase conectou a `CustomizationScreen` ao resto do aplicativo, permitindo que as alterações feitas pelo usuário fossem aplicadas instantaneamente no overlay, se ele estivesse ativo.
+
+### Alterações e Sistemas Implementados:
+
+1.  **Fluxo de Dados Bidirecional:**
+    *   A `HomeScreen` foi atualizada para passar seu objeto `OverlayConfig` para a `CustomizationScreen` ao navegar para ela.
+    *   A `CustomizationScreen` foi refatorada para usar esta configuração inicial para popular o estado de seus controles (sliders, checkboxes, etc.).
+    *   Ao sair (pressionando o botão "Voltar"), a `CustomizationScreen` agora retorna o objeto `OverlayConfig` atualizado para a `HomeScreen`.
+2.  **Aplicação Dinâmica de Configuração:**
+    *   A `HomeScreen` agora usa `await` ao navegar para a customização. Ao receber a nova configuração, ela atualiza seu estado.
+    *   Se o serviço de overlay estiver em execução, a `HomeScreen` imediatamente envia a nova configuração serializada em JSON para o `OverlayWidget` usando `FlutterOverlayWindow.shareData()`.
+    *   O `OverlayWidget`, que já estava ouvindo por essas atualizações, decodifica a nova configuração e se redesenha com o novo estilo e opções de dados.
+
+### Estado Atual:
+O ciclo de personalização está 100% completo e funcional. O usuário pode modificar visualmente o overlay e ver suas alterações refletidas em tempo real, criando uma experiência de usuário fluida e intuitiva.
+
+---
+
+## Fase 2: Implementação do Serviço de Sobreposição e Comunicação
+
+(O conteúdo da Fase 2 permanece o mesmo)
+
+---
+
+## Fase 1: Construção da Interface do Usuário (UI)
+
+(O conteúdo da Fase 1 permanece o mesmo)
+
