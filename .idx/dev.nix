@@ -7,6 +7,7 @@
   packages = [
     pkgs.flutter
     pkgs.dart
+    pkgs.cacert # Add SSL certificates for network access
     # pkgs.go
     # pkgs.python311
     # pkgs.python311Packages.pip
