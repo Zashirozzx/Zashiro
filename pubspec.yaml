@@ -1,7 +1,6 @@
-
 name: ziru
 description: "Ziru FPS Counter"
-publish_to: 'none' 
+publish_to: 'none'
 version: 1.1.0+3
 
 environment:
@@ -10,23 +9,13 @@ environment:
 dependencies:
   flutter:
     sdk: flutter
-
-  # UI
   cupertino_icons: ^1.0.6
   flutter_colorpicker: ^1.0.3
-
-  # Core Functionality & Permissions
   permission_handler: ^11.3.1
   flutter_overlay_window: ^0.4.4
-  
-  # Shizuku (Official pub.dev package - FINAL)
-  shizuku: ^2.0.1 # Usando a versão oficial e estável
-
-  # Data & State Persistence
+  shizuku: ^2.0.1
   shared_preferences: ^2.2.3
   provider: ^6.1.2
-
-  # Data Providers
   device_info_plus: ^10.1.0
   usage_stats: ^1.3.1
   battery_plus: ^5.0.3
@@ -36,7 +25,6 @@ dependencies:
 dev_dependencies:
   flutter_test:
     sdk: flutter
-
   flutter_lints: ^3.0.0
 
 flutter:

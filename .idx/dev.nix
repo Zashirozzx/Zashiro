@@ -3,56 +3,42 @@
 { pkgs, ... }: {
   # Which nixpkgs channel to use.
   channel = "stable-24.05"; # or "unstable"
-  # Use https://search.nixos.org/packages to find packages
+
+  # Use https://search.nixos.org/packages to find packages.
+  # This setup provides a complete environment for Flutter development.
   packages = [
+    # The Flutter SDK. Essential for building Flutter apps.
     pkgs.flutter
+    
+    # The Dart language SDK.
     pkgs.dart
-    pkgs.cacert # Add SSL certificates for network access
-    # pkgs.go
-    # pkgs.python311
-    # pkgs.python311Packages.pip
-    # pkgs.nodejs_20
-    # pkgs.nodePackages.nodemon
+    
+    # Java Development Kit. Required for the Android toolchain and Gradle.
+    pkgs.jdk
+    
+    # Android Debug Bridge (ADB) and other platform tools. Needed to communicate with devices.
+    pkgs.android-tools
+    
+    # Provides SSL certificates for network access, useful for package downloads.
+    pkgs.cacert
   ];
-  # Sets environment variables in the workspace
-  env = {};
+
+  # Sets environment variables in the workspace.
+  env = {}; # Cleaned up for the new environment.
+
   idx = {
-    # Search for the extensions you want on https://open-vsx.org/ and use "publisher.id"
+    # Search for extensions on https://open-vsx.org/ and use "publisher.id".
     extensions = [
       "dart-code.flutter"
       "dart-code.dart-code"
-      # "vscodevim.vim"
-      "google.gemini-cli-vscode-ide-companion"
     ];
-    # Enable previews
-    previews = {
-      enable = true;
-      previews = {
-        # web = {
-        #   # Example: run "npm run dev" with PORT set to IDX's defined port for previews,
-        #   # and show it in IDX's web preview panel
-        #   command = ["npm" "run" "dev"];
-        #   manager = "web";
-        #   env = {
-        #     # Environment variables to set for your server
-        #     PORT = "$PORT";
-        #   };
-        # };
-      };
-    };
-    # Workspace lifecycle hooks
+
+    # Workspace lifecycle hooks.
     workspace = {
-      # Runs when a workspace is first created
+      # Runs when a workspace is first created.
       onCreate = {
-        # Example: install JS dependencies from NPM
-        # npm-install = "npm install";
-        # Open editors for the following files by default, if they exist:
-        default.openFiles = [ ".idx/dev.nix" "README.md" ];
-      };
-      # Runs when the workspace is (re)started
-      onStart = {
-        # Example: start a background task to watch and re-build backend code
-        # watch-backend = "npm run watch-backend";
+        # Open key files on workspace creation.
+        default.openFiles = [ ".idx/dev.nix" "pubspec.yaml" "lib/main.dart" ];
       };
     };
   };
