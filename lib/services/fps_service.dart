@@ -1,56 +1,59 @@
 
-import 'package:shizuku_apk/shizuku.dart';
+import 'dart:convert';
+import 'package:shizuku/shizuku.dart';
 
 class FpsService {
-  // Singleton para garantir uma única instância do serviço
   static final FpsService _instance = FpsService._internal();
   factory FpsService() => _instance;
   FpsService._internal();
 
-  // Variável para armazenar o nome do pacote da camada superior da UI.
-  // Isso é crucial para filtrar os dados de latência corretos.
   String? _topActivityLayer;
 
-  // Função principal para obter o FPS.
+  // *** MÉTODO ATUALIZADO PARA A API OFICIAL DO SHIZUKU ***
   Future<int> getFps() async {
-    if (await Shizuku.checkPermissionStatus() != 0) {
-      // Se não tiver permissão, retorna 0.
+    // A verificação de permissão é feita na HomeScreen, mas uma checagem dupla não faz mal.
+    if (await Shizuku.checkPermission() != 0) {
       return 0;
     }
 
     try {
-      // Primeiro, encontramos a camada de atividade correta.
       await _findTopActivityLayer();
       if (_topActivityLayer == null) return 0;
 
-      // Executa o comando para obter os dados de latência da camada específica.
-      final result = await Shizuku.exec('dumpsys SurfaceFlinger --latency '''$_topActivityLayer'''', 60000);
-      final String output = result.stdout;
+      // Troca de 'newProcess' para o método oficial 'run'.
+      final process = await Shizuku.run([
+        'dumpsys',
+        'SurfaceFlinger',
+        '--latency',
+        _topActivityLayer!
+      ]);
+
+      final String output = await process.stdout.transform(utf8.decoder).join();
+      // Não é mais necessário gerenciar o processo com waitFor/destroy.
       
-      // Analisa a saída para calcular o FPS.
       return _parseFpsFromOutput(output);
 
     } catch (e) {
-      // Em caso de erro, retorna 0.
       return 0;
     }
   }
 
-  // Encontra o nome da camada da atividade em primeiro plano.
+  // *** MÉTODO ATUALIZADO PARA A API OFICIAL DO SHIZUKU ***
   Future<void> _findTopActivityLayer() async {
     try {
-      // O comando 'dumpsys activity top' nos dá informações sobre a atividade no topo da pilha.
-      final result = await Shizuku.exec('dumpsys activity top | grep "ACTIVITY"', 60000);
-      final String output = result.stdout;
-
-      // O formato da saída é algo como: "ACTIVITY com.example.app/.MainActivity ..."
-      // Precisamos extrair "com.example.app/com.example.app.MainActivity".
+      // Troca de 'newProcess' para o método oficial 'run'.
+      final process = await Shizuku.run([
+        'sh',
+        '-c',
+        'dumpsys activity top | grep "ACTIVITY"'
+      ]);
+      
+      final String output = await process.stdout.transform(utf8.decoder).join();
+      
       final regex = RegExp(r'ACTIVITY (\S+)');
       final match = regex.firstMatch(output);
       
       if (match != null && match.groupCount >= 1) {
-        // O group(1) contém o nome do componente.
-        // Precisamos formatá-lo para o padrão que o SurfaceFlinger usa.
         _topActivityLayer = match.group(1)!.replaceAll('/', '/#1');
       } else {
         _topActivityLayer = null;
@@ -60,22 +63,19 @@ class FpsService {
     }
   }
 
-  // Analisa a saída do comando 'dumpsys' para calcular o FPS.
+  // O método de parsing não precisa de alterações.
   int _parseFpsFromOutput(String output) {
     final lines = output.split('\n');
     if (lines.isEmpty) return 0;
 
-    // A primeira linha é a taxa de atualização do dispositivo, em nanossegundos.
     final refreshPeriodNs = int.tryParse(lines[0]);
     if (refreshPeriodNs == null || refreshPeriodNs == 0) return 0;
 
     final frameTimestamps = <int>[];
-    // As linhas seguintes contêm timestamps de quadros. Vamos pegar as últimas 127 linhas.
     for (final line in lines.skip(1)) {
       final parts = line.split('\t');
       if (parts.length == 3) {
         final timestamp = int.tryParse(parts[1]);
-        // Ignoramos frames não renderizados (timestamp = 0 ou um valor muito alto)
         if (timestamp != null && timestamp > 0 && timestamp < 1.7e18) {
           frameTimestamps.add(timestamp);
         }
@@ -84,22 +84,19 @@ class FpsService {
 
     if (frameTimestamps.length < 2) return 0;
 
-    // Calcula a diferença de tempo entre os frames.
     final diffs = <int>[];
     for (int i = 1; i < frameTimestamps.length; i++) {
       final diff = frameTimestamps[i] - frameTimestamps[i-1];
-      if (diff > 0) { // Ignora diferenças negativas ou zero
+      if (diff > 0) {
           diffs.add(diff);
       }
     }
 
     if (diffs.isEmpty) return 0;
 
-    // Calcula a média das diferenças.
     final averageDiff = diffs.reduce((a, b) => a + b) / diffs.length;
     if (averageDiff == 0) return 0;
 
-    // Calcula o FPS: 1 segundo em nanossegundos dividido pela diferença média.
     final double fps = 1e9 / averageDiff;
     return fps.round();
   }

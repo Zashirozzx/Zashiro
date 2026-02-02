@@ -1,6 +1,5 @@
 
 import 'dart:ui';
-import 'dart:convert';
 
 // Modelo de dados para encapsular todas as configurações de customização do overlay.
 class OverlayConfig {

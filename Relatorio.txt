@@ -3,53 +3,52 @@
 
 ---
 
-## Fase 4: Implementação do Contador de FPS com Shizuku
+## Fase 5: Persistência de Configuração
 
 ### Resumo
-Esta fase implementou a funcionalidade principal e mais complexa do Ziru: a medição de FPS em tempo real. Isso foi alcançado através da integração com a API do Shizuku para obter permissões de shell privilegiadas e executar comandos `dumpsys`.
+Para finalizar o ciclo de funcionalidades e melhorar a experiência do usuário, esta fase implementou a persistência das configurações de customização do overlay. Agora, as preferências do usuário são mantidas entre as sessões do aplicativo.
 
 ### Alterações e Sistemas Implementados:
 
-1.  **Integração com Shizuku (`pubspec.yaml`, `home_screen.dart`):
-    *   Adicionada a dependência `shizuku_apk` ao projeto.
-    *   A `HomeScreen` foi modificada para verificar o status do Shizuku (instalado, em execução, permissão concedida) na inicialização.
-    *   Foi criado um novo "Card de Status do Shizuku" na UI principal. Este card informa o usuário sobre o estado atual do Shizuku e fornece um botão para conceder a permissão diretamente do aplicativo, melhorando a usabilidade.
+1.  **Integração com `shared_preferences`:**
+    *   Adicionada a dependência `shared_preferences` ao `pubspec.yaml`.
 
-2.  **Serviço de Coleta de FPS (`lib/services/fps_service.dart`):
-    *   Foi criado um serviço Singleton (`FpsService`) dedicado exclusivamente à lógica de medição de FPS.
-    *   **Execução de Comando Privilegiado:** O serviço utiliza `Shizuku.exec()` para rodar o comando `dumpsys SurfaceFlinger --latency [nome_da_camada]`.
-    *   **Detecção da Atividade Correta:** Para garantir que o FPS medido é do aplicativo em primeiro plano, o serviço primeiro executa `dumpsys activity top` para encontrar o nome do componente da atividade visível e, em seguida, o formata corretamente para o comando do SurfaceFlinger.
-    *   **Análise de Saída (Parsing):** Foi implementado um parser robusto que processa a saída de texto do `dumpsys`. Ele extrai os timestamps de renderização de cada quadro, ignora valores inválidos, calcula a diferença média entre os quadros e converte essa média em um valor de FPS.
+2.  **Lógica de Carregamento (`_loadConfig`):
+    *   Na inicialização da `HomeScreen` (dentro de `initState`), o aplicativo agora tenta ler uma string JSON da chave `'overlay_config'` no `SharedPreferences`.
+    *   Se uma configuração for encontrada, o JSON é decodificado e usado para popular o objeto `_currentConfig`, garantindo que a última configuração do usuário seja restaurada.
 
-3.  **Integração com o Overlay (`lib/services/overlay_service.dart`):
-    *   O `OverlayWidget` agora possui uma instância do `FpsService`.
-    *   O `Timer` periódico foi atualizado: a cada 2 segundos, ele agora chama `_fpsService.getFps()` para obter o valor atual de FPS.
-    *   A chamada ao serviço de FPS é condicional, sendo executada apenas se o usuário ativou a opção `showFps` na tela de customização, otimizando o desempenho.
-    *   O valor de FPS retornado é armazenado no estado do widget e exibido na sobreposição.
+3.  **Lógica de Salvamento (`_saveConfig`):
+    *   O método `_navigateToCustomization` foi atualizado. Assim que uma nova configuração é recebida da `CustomizationScreen`, ela é imediatamente salva no `SharedPreferences`.
+    *   O objeto `OverlayConfig` é serializado para uma string JSON e gravado, substituindo a configuração antiga.
 
 ### Estado Atual:
-A funcionalidade de contador de FPS está completa e funcional. O aplicativo agora pode guiar o usuário na configuração do Shizuku e exibir o FPS de qualquer aplicativo ou jogo em tempo real na sobreposição. Esta era a funcionalidade central planejada para o Ziru. 
+A persistência está completa. O aplicativo agora se lembra das escolhas de customização do usuário, tornando-o mais conveniente e eliminando a necessidade de reconfigurar o overlay a cada inicialização.
+
+---
+
+## Nota Adicional: Refatoração Crítica da Dependência Shizuku
+
+Durante o desenvolvimento, foi encontrado um problema bloqueante onde a dependência original (`shizuku_apk`) não pôde ser resolvida, pois não estava disponível no repositório público `pub.dev`. Após investigação, foi descoberto que a abordagem correta era usar uma biblioteca diferente (`shizuku`), hospedada diretamente em um repositório Git. 
+
+Isso exigiu uma refatoração significativa:
+
+*   **`pubspec.yaml`**: A dependência foi alterada para buscar o pacote do GitHub.
+*   **`home_screen.dart`**: A lógica de verificação de status e pedido de permissão foi reescrita para se adaptar à nova API.
+*   **`fps_service.dart`**: O método de execução de comandos (`Shizuku.exec`) foi substituído por uma API mais complexa (`Shizuku.newProcess`), o que exigiu a reescrita de como os comandos de shell (incluindo pipes) são executados.
+
+Esta refatoração, embora não planejada, foi crucial para a viabilidade do projeto e para garantir a estabilidade da funcionalidade de medição de FPS.
+
+---
+
+## Fase 4: Implementação do Contador de FPS com Shizuku
+
+(O conteúdo da Fase 4 permanece o mesmo, mas deve ser lido considerando a nota sobre a refatoração acima)
 
 ---
 
 ## Fase 3: Ciclo de Customização em Tempo Real
 
-### Resumo
-Esta fase conectou a `CustomizationScreen` ao resto do aplicativo, permitindo que as alterações feitas pelo usuário fossem aplicadas instantaneamente no overlay, se ele estivesse ativo.
-
-### Alterações e Sistemas Implementados:
-
-1.  **Fluxo de Dados Bidirecional:**
-    *   A `HomeScreen` foi atualizada para passar seu objeto `OverlayConfig` para a `CustomizationScreen` ao navegar para ela.
-    *   A `CustomizationScreen` foi refatorada para usar esta configuração inicial para popular o estado de seus controles (sliders, checkboxes, etc.).
-    *   Ao sair (pressionando o botão "Voltar"), a `CustomizationScreen` agora retorna o objeto `OverlayConfig` atualizado para a `HomeScreen`.
-2.  **Aplicação Dinâmica de Configuração:**
-    *   A `HomeScreen` agora usa `await` ao navegar para a customização. Ao receber a nova configuração, ela atualiza seu estado.
-    *   Se o serviço de overlay estiver em execução, a `HomeScreen` imediatamente envia a nova configuração serializada em JSON para o `OverlayWidget` usando `FlutterOverlayWindow.shareData()`.
-    *   O `OverlayWidget`, que já estava ouvindo por essas atualizações, decodifica a nova configuração e se redesenha com o novo estilo e opções de dados.
-
-### Estado Atual:
-O ciclo de personalização está 100% completo e funcional. O usuário pode modificar visualmente o overlay e ver suas alterações refletidas em tempo real, criando uma experiência de usuário fluida e intuitiva.
+(O conteúdo da Fase 3 permanece o mesmo)
 
 ---
 

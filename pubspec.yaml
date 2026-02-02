@@ -2,7 +2,7 @@
 name: ziru
 description: "Ziru FPS Counter"
 publish_to: 'none' 
-version: 1.1.0+3 # Version bump for persistence feature
+version: 1.1.0+3
 
 environment:
   sdk: '>=3.4.0 <4.0.0'
@@ -18,10 +18,12 @@ dependencies:
   # Core Functionality & Permissions
   permission_handler: ^11.3.1
   flutter_overlay_window: ^0.4.4
-  shizuku_apk: ^1.1.2
+  
+  # Shizuku (Official pub.dev package - FINAL)
+  shizuku: ^2.0.1 # Usando a versão oficial e estável
 
   # Data & State Persistence
-  shared_preferences: ^2.2.3 # Adicionado para salvar as configs
+  shared_preferences: ^2.2.3
   provider: ^6.1.2
 
   # Data Providers
