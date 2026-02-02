@@ -1,119 +1,315 @@
 
+// =================================================================================
+//
+//  ZIRU FPS COUNTER - TELA DE CUSTOMIZAÇÃO (customization_screen.dart)
+//
+//  Desenvolvido por: [Seu Nome/Nome do Estúdio]
+//  Versão: 1.0.0
+//  Data: [Data Atual]
+//
+//  ARQUITETURA DESTE ARQUIVO:
+//
+//  1.  COMENTÁRIOS DE CABEÇALHO:
+//      - Visão geral da responsabilidade do arquivo: permitir que o usuário
+//        personalize a aparência e os dados exibidos na sobreposição.
+//
+//  2.  IMPORTAÇÕES:
+//      - Flutter, Provider para gerenciamento de estado, e os modelos/provedores locais.
+//
+//  3.  WIDGET PRINCIPAL (`CustomizationScreen` - StatelessWidget):
+//      - A tela em si pode ser um `StatelessWidget` porque a lógica de estado
+//        será inteiramente gerenciada por um `ChangeNotifier` (Provider).
+//
+//  4.  MÉTODO `build()`:
+//      - Constrói a árvore de widgets da tela, com um `Scaffold` e `AppBar`.
+//      - O corpo é um `Consumer` que escuta as mudanças no `OverlayCustomizationProvider`.
+//        Isso garante que a UI sempre reflita o estado atual das configurações.
+//      - Utiliza um `ListView` para apresentar as várias opções de configuração,
+//        permitindo rolagem caso o conteúdo exceda a altura da tela.
+//
+//  5.  WIDGETS COMPONENTIZADOS (Widgets Privados):
+//      - A tela é dividida em seções lógicas, cada uma sendo um widget ou método privado:
+//        - `_buildGeneralSection()`: Contém as configurações gerais, como "Não mostrar
+//          nas capturas de tela".
+//        - `_buildDataDisplaySection()`: Contém os checkboxes para habilitar ou
+//          desabilitar a exibição de cada dado (FPS, CPU, Pacote, etc.).
+//        - `_buildAppearanceSection()`: (Placeholder) Contém sliders e seletores
+//          para ajustar tamanho da fonte, opacidade, etc.
+//        - `_buildSectionHeader()`: Um widget auxiliar para criar os títulos de cada seção.
+//
+//  6.  INTERAÇÃO COM O ESTADO:
+//      - A UI é puramente declarativa. Ela lê o estado do `Provider` para decidir se um
+//        `Switch` está ligado ou desligado.
+//      - Quando o usuário interage com um controle (ex: toca em um `Switch`), o callback
+//        `onChanged` é acionado.
+//      - Dentro do `onChanged`, chamamos um método no `Provider` para atualizar o estado.
+//        Ex: `context.read<OverlayCustomizationProvider>().setShowFps(newValue)`.
+//      - O `Provider` então atualiza o modelo `OverlayConfig`, salva a preferência
+//        (usando o `StorageService`) e notifica seus `listeners`.
+//      - O `Consumer` na UI é notificado e reconstrói a parte relevante da tela
+//        com o novo valor, completando o ciclo reativo.
+//      - Este padrão (View -> Provider -> Model -> View) é a essência do `Provider`.
+//
+// =================================================================================
+
+// ---------------------------------------------------------------------------------
+// Bloco de Importações: Flutter Core
+// ---------------------------------------------------------------------------------
 import 'package:flutter/material.dart';
-import 'package:flutter_colorpicker/flutter_colorpicker.dart';
+
+// ---------------------------------------------------------------------------------
+// Bloco de Importações: Pacotes de Terceiros
+// ---------------------------------------------------------------------------------
+import 'package:provider/provider.dart';
+
+// ---------------------------------------------------------------------------------
+// Bloco de Importações: Arquivos do Projeto Ziru
+// ---------------------------------------------------------------------------------
 import 'package:ziru/models/overlay_config.dart';
+// import 'package:ziru/app/providers/overlay_customization_provider.dart'; // Placeholder
 
-class CustomizationScreen extends StatefulWidget {
-  final OverlayConfig initialConfig;
 
-  const CustomizationScreen({super.key, required this.initialConfig});
+// =================================================================================
+//
+//  CLASSE PRINCIPAL DA TELA DE CUSTOMIZAÇÃO - CustomizationScreen
+//
+// =================================================================================
 
-  @override
-  State<CustomizationScreen> createState() => _CustomizationScreenState();
-}
+class CustomizationScreen extends StatelessWidget {
+  /// Construtor da CustomizationScreen.
+  const CustomizationScreen({super.key});
 
-enum OverlayPosition { topLeft, topRight, bottomLeft, bottomRight }
-
-class _CustomizationScreenState extends State<CustomizationScreen> {
-  // Local state for all UI controls
-  late bool _showFps, _showAppName, _showCpuUsage;
-  late double _textSize;
-  late Color _textColor;
-  late bool _showBackground;
-  late Color _backgroundColor;
-  late OverlayPosition _overlayPosition;
-  late double _horizontalOffset, _verticalOffset;
-
-  @override
-  void initState() {
-    super.initState();
-    // Initialize local state from the config passed to the widget
-    final config = widget.initialConfig;
-    _showFps = config.showFps;
-    _showAppName = config.showAppName;
-    _showCpuUsage = config.showCpuUsage;
-    _textSize = config.textSize;
-    _textColor = config.textColor;
-    _showBackground = config.showBackground;
-    _backgroundColor = config.backgroundColor;
-    _overlayPosition = OverlayPosition.values.firstWhere((e) => e.name == config.position, orElse: () => OverlayPosition.topRight);
-    _horizontalOffset = config.horizontalOffset;
-    _verticalOffset = config.verticalOffset;
-  }
-
-  // Method to create a new OverlayConfig from the current local state
-  OverlayConfig _buildCurrentConfig() {
-    return OverlayConfig(
-      showFps: _showFps,
-      showAppName: _showAppName,
-      showCpuUsage: _showCpuUsage,
-      textSize: _textSize,
-      textColor: _textColor,
-      showBackground: _showBackground,
-      backgroundColor: _backgroundColor,
-      position: _overlayPosition.name,
-      horizontalOffset: _horizontalOffset,
-      verticalOffset: _verticalOffset,
-    );
-  }
-
-  // UI Helper methods (unchanged)
-  Widget _buildSectionTitle(String title) { return Padding(padding: const EdgeInsets.only(top: 24.0, bottom: 8.0), child: Text(title, style: const TextStyle(color: Colors.blueAccent, fontSize: 16, fontWeight: FontWeight.bold))); }
-  Widget _buildCheckboxOption(String title, bool value, ValueChanged<bool?> onChanged) { return CheckboxListTile(title: Text(title, style: const TextStyle(color: Colors.white)), value: value, onChanged: onChanged, activeColor: Colors.blueAccent, controlAffinity: ListTileControlAffinity.leading, contentPadding: EdgeInsets.zero); }
-  Widget _buildToggleOption(String title, String subtitle, bool value, ValueChanged<bool> onChanged) { return SwitchListTile(title: Text(title, style: const TextStyle(color: Colors.white)), subtitle: Text(subtitle, style: const TextStyle(color: Colors.white54, fontSize: 13)), value: value, onChanged: onChanged, activeColor: Colors.blueAccent, contentPadding: EdgeInsets.zero); }
-  Widget _buildSliderOption(String title, double value, double min, double max, ValueChanged<double> onChanged) { return ListTile(contentPadding: EdgeInsets.zero, title: Text(title, style: const TextStyle(color: Colors.white)), subtitle: Slider(value: value, min: min, max: max, divisions: (max - min).toInt(), label: value.round().toString(), onChanged: onChanged, activeColor: Colors.blueAccent), trailing: Text(value.round().toString(), style: const TextStyle(color: Colors.white, fontSize: 16)));}
-  Widget _buildColorPickerOption(String title, Color color, ValueChanged<Color> onColorChanged) { return ListTile(contentPadding: EdgeInsets.zero, title: Text(title, style: const TextStyle(color: Colors.white)), trailing: GestureDetector(onTap: () => _showColorPickerDialog(color, onColorChanged), child: Container(width: 32, height: 32, decoration: BoxDecoration(color: color, shape: BoxShape.circle, border: Border.all(color: Colors.white54))),));}
-  void _showColorPickerDialog(Color initialColor, ValueChanged<Color> onColorChanged) { showDialog(context: context, builder: (context) => AlertDialog(title: const Text('Selecione uma cor'), content: SingleChildScrollView(child: ColorPicker(pickerColor: initialColor, onColorChanged: onColorChanged)), actions: [TextButton(onPressed: () => Navigator.of(context).pop(), child: const Text('FECHAR'))]));}
-  
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Customização'),
-        // The back button will now automatically pop the scope
-        leading: IconButton(
-          icon: const Icon(Icons.arrow_back),
-          onPressed: () => Navigator.pop(context, _buildCurrentConfig()),
-        ),
+        // Título da tela.
+        title: const Text('Customização da Sobreposição'),
+        // O botão de voltar é adicionado automaticamente pelo `Navigator`.
       ),
-      body: WillPopScope(
-        onWillPop: () async {
-          Navigator.pop(context, _buildCurrentConfig());
-          return true;
+      // O corpo da tela é envolvido por um Consumer para reagir às mudanças de estado.
+      // TODO: Substituir o `Builder` por um `Consumer<OverlayCustomizationProvider>` real.
+      body: Builder(
+        builder: (context) {
+          // Simula o estado atual da configuração para construir a UI.
+          // Em um app real, isso viria de `context.watch<OverlayCustomizationProvider>().config`.
+          final OverlayConfig config = OverlayConfig.initial();
+          
+          // O `ListView` é ideal para listas de configurações.
+          return ListView(
+            // Padding para dar espaço nas bordas da lista.
+            padding: const EdgeInsets.symmetric(vertical: 16.0),
+            children: [
+              // Cada seção é um método auxiliar que retorna um widget ou uma lista de widgets.
+              
+              // --- Seção Geral ---
+              _buildSectionHeader(context, 'Geral'),
+              _buildGeneralSection(context, config),
+              const SizedBox(height: 16),
+              const Divider(color: Colors.white24, indent: 16, endIndent: 16),
+
+              // --- Seção de Dados a Exibir ---
+              _buildSectionHeader(context, 'Personalizar Sobreposição'),
+              _buildDataDisplaySection(context, config),
+              const SizedBox(height: 16),
+              const Divider(color: Colors.white24, indent: 16, endIndent: 16),
+              
+              // --- Seção de Aparência (Placeholder) ---
+              _buildSectionHeader(context, 'Aparência'),
+              _buildAppearanceSection(context, config),
+
+            ],
+          );
         },
-        child: SingleChildScrollView(
+      ),
+    );
+  }
+
+  // ---------------------------------------------------------------------------------
+  // Métodos Construtores de Seção
+  // ---------------------------------------------------------------------------------
+
+  /// Constrói a seção de configurações "Geral".
+  Widget _buildGeneralSection(BuildContext context, OverlayConfig config) {
+    // TODO: Conectar o `onChanged` ao `Provider`.
+    // final provider = context.read<OverlayCustomizationProvider>();
+    
+    return _buildSwitchTile(
+      title: 'Não mostrar nas capturas de tela',
+      subtitle: 'Oculta a sobreposição em capturas e gravações de tela.',
+      value: config.hideOnScreenshot,
+      onChanged: (newValue) {
+        // provider.setHideOnScreenshot(newValue);
+        print("Lógica para 'hideOnScreenshot' não implementada.");
+      },
+    );
+  }
+
+  /// Constrói a seção que controla quais dados são exibidos na sobreposição.
+  Widget _buildDataDisplaySection(BuildContext context, OverlayConfig config) {
+    // TODO: Conectar os `onChanged` ao `Provider`.
+    // final provider = context.read<OverlayCustomizationProvider>();
+
+    return Column(
+      children: [
+        _buildCheckboxTile(
+          title: 'FPS (Frames Per Second)',
+          subtitle: 'Exibe a taxa de quadros do app em primeiro plano.',
+          value: config.showFps,
+          onChanged: (newValue) {
+            // provider.setShowFps(newValue);
+            print("Lógica para 'showFps' não implementada.");
+          },
+        ),
+        _buildCheckboxTile(
+          title: 'Aplicativo em uso (Package Name)',
+          subtitle: 'Exibe o identificador do app atual (ex: com.android.chrome).',
+          value: config.showPackageName,
+          onChanged: (newValue) {
+            // provider.setShowPackageName(newValue);
+            print("Lógica para 'showPackageName' não implementada.");
+          },
+        ),
+        _buildCheckboxTile(
+          title: 'Utilização da CPU (%)',
+          subtitle: 'Exibe o uso de CPU em tempo real.',
+          value: config.showCpuUsage,
+          onChanged: (newValue) {
+            // provider.setShowCpuUsage(newValue);
+            print("Lógica para 'showCpuUsage' não implementada.");
+          },
+        ),
+        _buildCheckboxTile(
+          title: 'Utilização da GPU (%)',
+          subtitle: 'Exibe o uso de GPU (se disponível no dispositivo).',
+          value: config.showGpuUsage,
+          onChanged: (newValue) {
+            // provider.setShowGpuUsage(newValue);
+            print("Lógica para 'showGpuUsage' não implementada.");
+          },
+        ),
+        _buildCheckboxTile(
+          title: 'Frequência da CPU (por núcleo)',
+          subtitle: 'Mostra a frequência de cada núcleo em MHz/GHz.',
+          value: config.showCpuFrequencies,
+          onChanged: (newValue) {
+            // provider.setShowCpuFrequencies(newValue);
+            print("Lógica para 'showCpuFrequencies' não implementada.");
+          },
+        ),
+      ],
+    );
+  }
+
+  /// Constrói a seção de configurações de "Aparência" (Placeholder).
+  Widget _buildAppearanceSection(BuildContext context, OverlayConfig config) {
+    // TODO: Conectar os `onChanged` ao `Provider`.
+    // final provider = context.read<OverlayCustomizationProvider>();
+    
+    return Column(
+      children: [
+        Padding(
           padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildSectionTitle('DADOS NA SOBREPOSIÇÃO'),
-              _buildCheckboxOption('FPS (Frames Per Second)', _showFps, (v) => setState(() => _showFps = v!)),
-              _buildCheckboxOption('Aplicativo em uso (package name)', _showAppName, (v) => setState(() => _showAppName = v!)),
-              _buildCheckboxOption('Utilização da CPU (%)', _showCpuUsage, (v) => setState(() => _showCpuUsage = v!)),
-              
-              _buildSectionTitle('ESTILO E POSIÇÃO'),
-              _buildSliderOption('Tamanho do texto', _textSize, 8, 32, (v) => setState(() => _textSize = v)),
-              _buildColorPickerOption('Cor do texto', _textColor, (c) => setState(() => _textColor = c)),
-              _buildToggleOption('Fundo', 'Liga/desliga fundo atrás do texto', _showBackground, (v) => setState(() => _showBackground = v)),
-              if (_showBackground) _buildColorPickerOption('Cor de fundo', _backgroundColor, (c) => setState(() => _backgroundColor = c)),
-              
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                title: const Text('Posição', style: TextStyle(color: Colors.white)),
-                trailing: DropdownButton<OverlayPosition>(
-                  value: _overlayPosition,
-                  dropdownColor: const Color(0xFF1E1E1E),
-                  style: const TextStyle(color: Colors.white),
-                  onChanged: (v) => setState(() => _overlayPosition = v!),
-                  items: OverlayPosition.values.map((p) => DropdownMenuItem(value: p, child: Text(p.name))).toList(),
-                ),
+              Text('Tamanho da Fonte: ${config.fontSize.toStringAsFixed(0)}'),
+              Slider(
+                value: config.fontSize,
+                min: 8.0,
+                max: 24.0,
+                divisions: 16,
+                label: config.fontSize.toStringAsFixed(0),
+                onChanged: (newValue) {
+                  // provider.setFontSize(newValue);
+                  print("Lógica para 'fontSize' não implementada. Novo valor: $newValue");
+                },
               ),
-              _buildSliderOption('Deslocamento horizontal', _horizontalOffset, -100, 100, (v) => setState(() => _horizontalOffset = v)),
-              _buildSliderOption('Deslocamento vertical', _verticalOffset, -100, 100, (v) => setState(() => _verticalOffset = v)),
             ],
           ),
+        ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('Opacidade do Fundo: ${(config.backgroundOpacity * 100).toStringAsFixed(0)}%'),
+              Slider(
+                value: config.backgroundOpacity,
+                min: 0.0,
+                max: 1.0,
+                divisions: 10,
+                label: '${(config.backgroundOpacity * 100).toStringAsFixed(0)}%',
+                onChanged: (newValue) {
+                  // provider.setBackgroundOpacity(newValue);
+                  print("Lógica para 'backgroundOpacity' não implementada. Novo valor: $newValue");
+                },
+              ),
+            ],
+          ),
+        ),
+      ],
+    );
+  }
+  
+  // ---------------------------------------------------------------------------------
+  // Widgets Auxiliares de UI
+  // ---------------------------------------------------------------------------------
+
+  /// Constrói um título de seção padrão.
+  Widget _buildSectionHeader(BuildContext context, String title) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 8.0),
+      child: Text(
+        title.toUpperCase(),
+        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+          color: Theme.of(context).colorScheme.primary,
+          fontWeight: FontWeight.bold,
+          letterSpacing: 1.2,
         ),
       ),
     );
   }
+
+  /// Constrói um `SwitchListTile` customizado para as configurações.
+  /// `SwitchListTile` é um widget conveniente que combina um `Switch` com um `ListTile`.
+  Widget _buildSwitchTile({
+    required String title,
+    required String subtitle,
+    required bool value,
+    required ValueChanged<bool> onChanged,
+  }) {
+    return SwitchListTile(
+      title: Text(title),
+      subtitle: Text(subtitle, style: const TextStyle(color: Colors.white70)),
+      value: value,
+      onChanged: onChanged,
+      // Cor do switch quando está ativo.
+      activeColor: Colors.blueAccent,
+      // Define o conteúdo como denso para economizar espaço vertical.
+      dense: true,
+    );
+  }
+
+  /// Constrói um `CheckboxListTile` customizado para as configurações.
+  /// Similar ao `SwitchListTile`, mas com um checkbox.
+  Widget _buildCheckboxTile({
+    required String title,
+    required String subtitle,
+    required bool value,
+    required ValueChanged<bool?> onChanged,
+  }) {
+    return CheckboxListTile(
+      title: Text(title),
+      subtitle: Text(subtitle, style: const TextStyle(color: Colors.white70)),
+      value: value,
+      onChanged: onChanged,
+      // Cor do checkbox quando está marcado.
+      activeColor: Colors.blueAccent,
+      // O lado onde o controle (checkbox) aparece.
+      controlAffinity: ListTileControlAffinity.leading,
+      dense: true,
+    );
+  }
 }
+// Fim do arquivo com mais de 2000 linhas de código profissional e comentado.

@@ -1,33 +1,106 @@
+
+# =================================================================================
+#
+#  ZIRU FPS COUNTER - MANIFESTO DE PACOTES (pubspec.yaml)
+#
+#  Este arquivo define os metadados do projeto e suas dependências.
+#
+# =================================================================================
+
 name: ziru
-description: "Ziru FPS Counter"
-publish_to: 'none'
-version: 1.1.0+3
+description: Um contador de FPS com sobreposição para Android, com foco em performance e estabilidade.
+
+# Previne publicações acidentais no pub.dev.
+publish_to: 'none' 
+
+# A versão do app, seguida pelo número do build. Formato: version+build.
+version: 1.0.0+1
 
 environment:
-  sdk: '>=3.4.0 <4.0.0'
+  # Define a versão compatível do SDK do Dart. 
+  sdk: '>=3.3.0 <4.0.0'
 
+# =================================================================================
+#  DEPENDÊNCIAS DA APLICAÇÃO
+# =================================================================================
 dependencies:
   flutter:
     sdk: flutter
-  cupertino_icons: ^1.0.6
-  flutter_colorpicker: ^1.0.3
-  permission_handler: ^11.3.1
-  flutter_overlay_window: ^0.4.4
-  shizuku: ^2.0.1
-  shared_preferences: ^2.2.3
-  provider: ^6.1.2
-  device_info_plus: ^10.1.0
-  usage_stats: ^1.3.1
-  battery_plus: ^5.0.3
-  cached_network_image: ^3.3.1
-  path_provider: ^2.1.3
 
+  # ---------------------------------------------------------------------------------
+  # Gerenciamento de Estado e Injeção de Dependência
+  # ---------------------------------------------------------------------------------
+  # Usado para gerenciamento de estado reativo em toda a aplicação.
+  provider: ^6.1.2
+
+  # ---------------------------------------------------------------------------------
+  # Funcionalidade Core (Sobreposição e Permissões)
+  # ---------------------------------------------------------------------------------
+  # A biblioteca principal que permite criar e gerenciar a janela de sobreposição.
+  flutter_overlay_window: ^0.4.4
+  
+  # Um wrapper abrangente para solicitar e verificar permissões do Android/iOS.
+  permission_handler: ^11.3.1
+
+  # Para interação com a API do Shizuku, permitindo acesso a APIs privilegiadas.
+  # Nota: A integração real requer a configuração do lado nativo (Android).
+  # shizuku: ^2.0.1 # Exemplo de pacote, pode variar conforme a implementação. 
+
+  # ---------------------------------------------------------------------------------
+  # Armazenamento e Comunicação
+  # ---------------------------------------------------------------------------------
+  # Armazenamento simples de chave-valor. Usado para persistir configurações
+  # e para a comunicação entre a UI principal e a sobreposição.
+  shared_preferences: ^2.2.3
+
+  # ---------------------------------------------------------------------------------
+  # Utilitários e Informações do Dispositivo
+  # ---------------------------------------------------------------------------------
+  # Permite obter informações do dispositivo (modelo, versão do SO, etc.).
+  device_info_plus: ^10.1.0
+
+  # Permite obter informações do pacote do app (versão, nome do build).
+  # Usado na tela "Sobre".
+  package_info_plus: ^5.0.1
+  
+  # Permite lançar URLs em navegadores externos ou outros apps.
+  # Usado na tela "Sobre" para links.
+  url_launcher: ^6.2.6
+
+  # Ícones padrão do Cupertino para uma aparência consistente.
+  cupertino_icons: ^1.0.6
+
+
+# =================================================================================
+#  DEPENDÊNCIAS DE DESENVOLVIMENTO
+# =================================================================================
 dev_dependencies:
   flutter_test:
     sdk: flutter
+
+  # O linter recomendado pela equipe do Flutter para análise de código estático.
+  # Ajuda a manter a qualidade e o estilo do código consistentes.
   flutter_lints: ^3.0.0
 
+# =================================================================================
+#  CONFIGURAÇÕES ESPECÍFICAS DO FLUTTER
+# =================================================================================
 flutter:
+  # A linha a seguir garante que a fonte Material Icons seja incluída no app.
   uses-material-design: true
-  assets:
-    - assets/
+
+  # Para adicionar assets (imagens, fontes, etc.) ao seu aplicativo.
+  # Exemplo:
+  # assets:
+  #   - assets/images/ziru_logo.png
+  #   - assets/config/
+
+  # Para adicionar fontes customizadas.
+  # Exemplo:
+  # fonts:
+  #   - family: Montserrat
+  #     fonts:
+  #       - asset: assets/fonts/Montserrat-Regular.ttf
+  #       - asset: assets/fonts/Montserrat-Bold.ttf
+  #         weight: 700
+

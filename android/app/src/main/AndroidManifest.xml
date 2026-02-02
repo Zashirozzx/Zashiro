@@ -1,51 +1,128 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools">
 
-    <uses-permission
-        android:name="android.permission.PACKAGE_USAGE_STATS"
-        tools:ignore="ProtectedPermissions" />
+<!--
+==================================================================================
 
+    ZIRU FPS COUNTER - Android Manifest (AndroidManifest.xml)
+
+    Este arquivo é o manifesto principal do aplicativo Android. Ele declara
+    os componentes do aplicativo para o sistema operacional, como permissões,
+    atividades, serviços, e receptores.
+
+==================================================================================
+-->
+<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!--
+    ==============================================================================
+    PERMISSÕES (Permissions)
+    
+    Esta seção declara as permissões que o aplicativo precisa para acessar
+    APIs protegidas ou recursos do sistema. O usuário precisará conceder
+    essas permissões, seja no momento da instalação (para permissões normais) 
+    ou em tempo de execução (para permissões perigosas).
+    ==============================================================================
+    -->
+
+    <!-- Permissões de Rede: Essenciais para verificar o estado da conexão e, se necessário, fazer requisições. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
+    <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
+
+    <!-- Permissão CRÍTICA: Permite que o app desenhe sobre outros aplicativos. É a base do overlay. -->
+    <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
+
+    <!-- Permissão CRÍTICA: Permite que o app acesse estatísticas de uso. Usado para detectar qual app está em primeiro plano. -->
+    <uses-permission android:name="android.permission.PACKAGE_USAGE_STATS" />
+
+    <!-- Permissões de Serviço em Primeiro Plano (Foreground Service): Necessárias para manter o serviço de sobreposição rodando de forma estável. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_SPECIAL_USE" />
+
+    <!-- Permite que o app poste notificações (necessário para o serviço de foreground a partir do Android 13). -->
+    <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
+
+    <!-- Permissão CRÍTICA: Permite ao app consultar a lista de todos os apps instalados. -->
+    <uses-permission android:name="android.permission.QUERY_ALL_PACKAGES" />
+
+    <!-- Permissões de Armazenamento (Legado): Necessárias para ler/escrever em armazenamento externo em versões mais antigas do Android. -->
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="32" />
+
+    <!-- Impede que o processador entre em modo de suspensão. Usado para manter a coleta de dados consistente. -->
+    <uses-permission android:name="android.permission.WAKE_LOCK" />
+
+    <!-- Permite que o app inicie um serviço quando o dispositivo termina de inicializar. -->
+    <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+
+    <!-- Permite que o app controle o vibrador do dispositivo. -->
+    <uses-permission android:name="android.permission.VIBRATE" />
+
+    <!-- Permissão muito importante para serviços de longa duração. Solicita que o sistema não aplique otimizações de bateria que poderiam matar o serviço. -->
+    <uses-permission android:name="android.permission.REQUEST_IGNORE_BATTERY_OPTIMIZATIONS" />
+
+    <!--
+    ==============================================================================
+    PERMISSÕES DO SHIZUKU
+    
+    Permissões específicas para interagir com a API do Shizuku.
+    ==============================================================================
+    -->
+    <uses-permission android:name="moe.shizuku.manager.permission.API_V23" />
+    <uses-permission android:name="com.hannsapp.fpscounter.DYNAMIC_RECEIVER_NOT_EXPORTED_PERMISSION" />
+
+
+    <!--
+    ==============================================================================
+    TAG DO APLICATIVO (Application Tag)
+    
+    Define as propriedades globais do aplicativo.
+    ==============================================================================
+    -->
     <application
-        android:label="ziru_fps_counter"
+        android:label="Ziru"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
+
+        <!--
+        ==========================================================================
+        ATIVIDADE PRINCIPAL (Main Activity)
+        
+        O ponto de entrada da UI do Flutter.
+        ==========================================================================
+        -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
             android:launchMode="singleTop"
-            android:taskAffinity=""
             android:theme="@style/LaunchTheme"
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
             android:hardwareAccelerated="true"
             android:windowSoftInputMode="adjustResize">
-            <!-- Specifies an Android theme to apply to this Activity as soon as
-                 the Android process has started. This theme is visible to the user
-                 while the Flutter UI initializes. After that, this theme continues
-                 to determine the Window background behind the Flutter UI. -->
-            <meta-data
-              android:name="io.flutter.embedding.android.NormalTheme"
-              android:resource="@style/NormalTheme"
-              />
+            
+            <!-- Especifica que esta atividade é o ponto de entrada principal do launcher. -->
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
-        <!-- Don't delete the meta-data below.
-             This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
+
+        <!--
+        ==========================================================================
+        METADADOS E SERVIÇOS
+        ==========================================================================
+        -->
+
+        <!-- Metadados para embutir a versão do Flutter. Não remova. -->
         <meta-data
             android:name="flutterEmbedding"
             android:value="2" />
-    </application>
-    <!-- Required to query activities that can process text, see:
-         https://developer.android.com/training/package-visibility and
-         https://developer.android.com/reference/android/content/Intent#ACTION_PROCESS_TEXT.
+            
+        <!-- 
+        Metadados para Shizuku 
+        Indica que o app suporta Shizuku. 
+        -->
+        <meta-data android:name="moe.shizuku.client.v3.meta.supoort" android:value="true" />
 
-         In particular, this is used by the Flutter engine in io.flutter.plugin.text.ProcessTextPlugin. -->
-    <queries>
-        <intent>
-            <action android:name="android.intent.action.PROCESS_TEXT"/>
-            <data android:mimeType="text/plain"/>
-        </intent>
-    </queries>
+    </application>
 </manifest>
