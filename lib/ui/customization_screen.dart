@@ -1,123 +1,88 @@
 
 // =================================================================================
 //
-//  ZIRU FPS COUNTER - TELA DE CUSTOMIZAÇÃO (customization_screen.dart)
+//  ZIRU FPS COUNTER - TELA DE CUSTOMIZAÇÃO (customization_screen.dart) - VERSÃO FUNCIONAL
 //
 //  Desenvolvido por: [Seu Nome/Nome do Estúdio]
-//  Versão: 1.0.0
+//  Versão: 1.1.0 (Funcional)
 //  Data: [Data Atual]
 //
-//  ARQUITETURA DESTE ARQUIVO:
+//  ARQUITETURA DESTE ARQUIVO (ATUALIZADA):
 //
-//  1.  COMENTÁRIOS DE CABEÇALHO:
-//      - Visão geral da responsabilidade do arquivo: permitir que o usuário
-//        personalize a aparência e os dados exibidos na sobreposição.
+//  1.  WIDGET PRINCIPAL (`CustomizationScreen` - StatelessWidget):
+//      - Permanece `Stateless` pois todo o estado é gerenciado pelo Provider.
 //
-//  2.  IMPORTAÇÕES:
-//      - Flutter, Provider para gerenciamento de estado, e os modelos/provedores locais.
+//  2.  MÉTODO `build()`:
+//      - O corpo agora é um `Consumer<OverlayCustomizationProvider>`.
+//      - Ele lida com o estado de `isLoading` do provedor, mostrando um
+//        `CircularProgressIndicator` enquanto as configurações são carregadas.
+//      - Uma vez carregado, ele constrói a lista de configurações usando os dados
+//        reais do `provider.config`.
 //
-//  3.  WIDGET PRINCIPAL (`CustomizationScreen` - StatelessWidget):
-//      - A tela em si pode ser um `StatelessWidget` porque a lógica de estado
-//        será inteiramente gerenciada por um `ChangeNotifier` (Provider).
+//  3.  WIDGETS DE CONTROLE (CONECTADOS):
+//      - Todos os widgets de controle (`SwitchListTile`, `CheckboxListTile`, `Slider`)
+//        estão agora totalmente funcionais.
+//      - A propriedade `value` de cada controle lê o estado do `provider.config`.
+//      - O callback `onChanged` de cada controle chama o método de atualização
+//        correspondente no `provider` (ex: `context.read<...>().updateShowFps(newValue)`).
+//      - Usamos `context.read` dentro dos callbacks para despachar a ação sem
+//        causar uma reconstrução desnecessária nesse ponto.
 //
-//  4.  MÉTODO `build()`:
-//      - Constrói a árvore de widgets da tela, com um `Scaffold` e `AppBar`.
-//      - O corpo é um `Consumer` que escuta as mudanças no `OverlayCustomizationProvider`.
-//        Isso garante que a UI sempre reflita o estado atual das configurações.
-//      - Utiliza um `ListView` para apresentar as várias opções de configuração,
-//        permitindo rolagem caso o conteúdo exceda a altura da tela.
-//
-//  5.  WIDGETS COMPONENTIZADOS (Widgets Privados):
-//      - A tela é dividida em seções lógicas, cada uma sendo um widget ou método privado:
-//        - `_buildGeneralSection()`: Contém as configurações gerais, como "Não mostrar
-//          nas capturas de tela".
-//        - `_buildDataDisplaySection()`: Contém os checkboxes para habilitar ou
-//          desabilitar a exibição de cada dado (FPS, CPU, Pacote, etc.).
-//        - `_buildAppearanceSection()`: (Placeholder) Contém sliders e seletores
-//          para ajustar tamanho da fonte, opacidade, etc.
-//        - `_buildSectionHeader()`: Um widget auxiliar para criar os títulos de cada seção.
-//
-//  6.  INTERAÇÃO COM O ESTADO:
-//      - A UI é puramente declarativa. Ela lê o estado do `Provider` para decidir se um
-//        `Switch` está ligado ou desligado.
-//      - Quando o usuário interage com um controle (ex: toca em um `Switch`), o callback
-//        `onChanged` é acionado.
-//      - Dentro do `onChanged`, chamamos um método no `Provider` para atualizar o estado.
-//        Ex: `context.read<OverlayCustomizationProvider>().setShowFps(newValue)`.
-//      - O `Provider` então atualiza o modelo `OverlayConfig`, salva a preferência
-//        (usando o `StorageService`) e notifica seus `listeners`.
-//      - O `Consumer` na UI é notificado e reconstrói a parte relevante da tela
-//        com o novo valor, completando o ciclo reativo.
-//      - Este padrão (View -> Provider -> Model -> View) é a essência do `Provider`.
+//  4.  FLUXO DE DADOS COMPLETO:
+//      - Usuário toca em um switch.
+//      - O callback `onChanged` chama o método no `OverlayCustomizationProvider`.
+//      - O Provider cria um novo `OverlayConfig` com a mudança.
+//      - O Provider salva a nova configuração no `StorageService`.
+//      - O Provider envia a nova configuração para o `OverlayService` (atualização em tempo real).
+//      - O Provider chama `notifyListeners()`.
+//      - O `Consumer` na `CustomizationScreen` reconstrói a UI com os novos dados.
+//      - O ciclo está completo.
 //
 // =================================================================================
 
-// ---------------------------------------------------------------------------------
-// Bloco de Importações: Flutter Core
-// ---------------------------------------------------------------------------------
 import 'package:flutter/material.dart';
-
-// ---------------------------------------------------------------------------------
-// Bloco de Importações: Pacotes de Terceiros
-// ---------------------------------------------------------------------------------
 import 'package:provider/provider.dart';
-
-// ---------------------------------------------------------------------------------
-// Bloco de Importações: Arquivos do Projeto Ziru
-// ---------------------------------------------------------------------------------
 import 'package:ziru/models/overlay_config.dart';
-// import 'package:ziru/app/providers/overlay_customization_provider.dart'; // Placeholder
-
-
-// =================================================================================
-//
-//  CLASSE PRINCIPAL DA TELA DE CUSTOMIZAÇÃO - CustomizationScreen
-//
-// =================================================================================
+import 'package:ziru/providers/overlay_customization_provider.dart';
 
 class CustomizationScreen extends StatelessWidget {
-  /// Construtor da CustomizationScreen.
   const CustomizationScreen({super.key});
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        // Título da tela.
         title: const Text('Customização da Sobreposição'),
-        // O botão de voltar é adicionado automaticamente pelo `Navigator`.
       ),
       // O corpo da tela é envolvido por um Consumer para reagir às mudanças de estado.
-      // TODO: Substituir o `Builder` por um `Consumer<OverlayCustomizationProvider>` real.
-      body: Builder(
-        builder: (context) {
-          // Simula o estado atual da configuração para construir a UI.
-          // Em um app real, isso viria de `context.watch<OverlayCustomizationProvider>().config`.
-          final OverlayConfig config = OverlayConfig.initial();
-          
-          // O `ListView` é ideal para listas de configurações.
+      body: Consumer<OverlayCustomizationProvider>(
+        builder: (context, provider, child) {
+          // Enquanto as configurações estão sendo carregadas, mostra um indicador de progresso.
+          if (provider.isLoading) {
+            return const Center(child: CircularProgressIndicator());
+          }
+
+          // Uma vez carregadas, constrói a lista de configurações.
+          final OverlayConfig config = provider.config;
+
           return ListView(
-            // Padding para dar espaço nas bordas da lista.
             padding: const EdgeInsets.symmetric(vertical: 16.0),
             children: [
-              // Cada seção é um método auxiliar que retorna um widget ou uma lista de widgets.
-              
-              // --- Seção Geral ---
+              // Seção Geral
               _buildSectionHeader(context, 'Geral'),
               _buildGeneralSection(context, config),
               const SizedBox(height: 16),
               const Divider(color: Colors.white24, indent: 16, endIndent: 16),
 
-              // --- Seção de Dados a Exibir ---
+              // Seção de Dados a Exibir
               _buildSectionHeader(context, 'Personalizar Sobreposição'),
               _buildDataDisplaySection(context, config),
               const SizedBox(height: 16),
               const Divider(color: Colors.white24, indent: 16, endIndent: 16),
-              
-              // --- Seção de Aparência (Placeholder) ---
+
+              // Seção de Aparência
               _buildSectionHeader(context, 'Aparência'),
               _buildAppearanceSection(context, config),
-
             ],
           );
         },
@@ -125,87 +90,58 @@ class CustomizationScreen extends StatelessWidget {
     );
   }
 
-  // ---------------------------------------------------------------------------------
-  // Métodos Construtores de Seção
-  // ---------------------------------------------------------------------------------
+  // Os métodos de construção de seção agora recebem o context para poder chamar o provider.
 
-  /// Constrói a seção de configurações "Geral".
   Widget _buildGeneralSection(BuildContext context, OverlayConfig config) {
-    // TODO: Conectar o `onChanged` ao `Provider`.
-    // final provider = context.read<OverlayCustomizationProvider>();
-    
+    final provider = context.read<OverlayCustomizationProvider>();
     return _buildSwitchTile(
       title: 'Não mostrar nas capturas de tela',
       subtitle: 'Oculta a sobreposição em capturas e gravações de tela.',
       value: config.hideOnScreenshot,
-      onChanged: (newValue) {
-        // provider.setHideOnScreenshot(newValue);
-        print("Lógica para 'hideOnScreenshot' não implementada.");
-      },
+      onChanged: (newValue) => provider.updateHideOnScreenshot(newValue),
     );
   }
 
-  /// Constrói a seção que controla quais dados são exibidos na sobreposição.
   Widget _buildDataDisplaySection(BuildContext context, OverlayConfig config) {
-    // TODO: Conectar os `onChanged` ao `Provider`.
-    // final provider = context.read<OverlayCustomizationProvider>();
-
+    final provider = context.read<OverlayCustomizationProvider>();
     return Column(
       children: [
         _buildCheckboxTile(
           title: 'FPS (Frames Per Second)',
           subtitle: 'Exibe a taxa de quadros do app em primeiro plano.',
           value: config.showFps,
-          onChanged: (newValue) {
-            // provider.setShowFps(newValue);
-            print("Lógica para 'showFps' não implementada.");
-          },
+          onChanged: (newValue) => provider.updateShowFps(newValue ?? false),
         ),
         _buildCheckboxTile(
           title: 'Aplicativo em uso (Package Name)',
-          subtitle: 'Exibe o identificador do app atual (ex: com.android.chrome).',
+          subtitle: 'Exibe o identificador do app atual.',
           value: config.showPackageName,
-          onChanged: (newValue) {
-            // provider.setShowPackageName(newValue);
-            print("Lógica para 'showPackageName' não implementada.");
-          },
+          onChanged: (newValue) => provider.updateShowPackageName(newValue ?? false),
         ),
         _buildCheckboxTile(
           title: 'Utilização da CPU (%)',
-          subtitle: 'Exibe o uso de CPU em tempo real.',
+          subtitle: 'Exibe o uso de CPU em tempo real (requer root ou adb).',
           value: config.showCpuUsage,
-          onChanged: (newValue) {
-            // provider.setShowCpuUsage(newValue);
-            print("Lógica para 'showCpuUsage' não implementada.");
-          },
+          onChanged: (newValue) => provider.updateShowCpuUsage(newValue ?? false),
         ),
         _buildCheckboxTile(
           title: 'Utilização da GPU (%)',
           subtitle: 'Exibe o uso de GPU (se disponível no dispositivo).',
           value: config.showGpuUsage,
-          onChanged: (newValue) {
-            // provider.setShowGpuUsage(newValue);
-            print("Lógica para 'showGpuUsage' não implementada.");
-          },
+          onChanged: (newValue) => provider.updateShowGpuUsage(newValue ?? false),
         ),
         _buildCheckboxTile(
           title: 'Frequência da CPU (por núcleo)',
           subtitle: 'Mostra a frequência de cada núcleo em MHz/GHz.',
           value: config.showCpuFrequencies,
-          onChanged: (newValue) {
-            // provider.setShowCpuFrequencies(newValue);
-            print("Lógica para 'showCpuFrequencies' não implementada.");
-          },
+          onChanged: (newValue) => provider.updateShowCpuFrequencies(newValue ?? false),
         ),
       ],
     );
   }
 
-  /// Constrói a seção de configurações de "Aparência" (Placeholder).
   Widget _buildAppearanceSection(BuildContext context, OverlayConfig config) {
-    // TODO: Conectar os `onChanged` ao `Provider`.
-    // final provider = context.read<OverlayCustomizationProvider>();
-    
+    final provider = context.read<OverlayCustomizationProvider>();
     return Column(
       children: [
         Padding(
@@ -220,10 +156,7 @@ class CustomizationScreen extends StatelessWidget {
                 max: 24.0,
                 divisions: 16,
                 label: config.fontSize.toStringAsFixed(0),
-                onChanged: (newValue) {
-                  // provider.setFontSize(newValue);
-                  print("Lógica para 'fontSize' não implementada. Novo valor: $newValue");
-                },
+                onChanged: (newValue) => provider.updateFontSize(newValue),
               ),
             ],
           ),
@@ -240,10 +173,7 @@ class CustomizationScreen extends StatelessWidget {
                 max: 1.0,
                 divisions: 10,
                 label: '${(config.backgroundOpacity * 100).toStringAsFixed(0)}%',
-                onChanged: (newValue) {
-                  // provider.setBackgroundOpacity(newValue);
-                  print("Lógica para 'backgroundOpacity' não implementada. Novo valor: $newValue");
-                },
+                onChanged: (newValue) => provider.updateBackgroundOpacity(newValue),
               ),
             ],
           ),
@@ -251,12 +181,11 @@ class CustomizationScreen extends StatelessWidget {
       ],
     );
   }
-  
+
   // ---------------------------------------------------------------------------------
-  // Widgets Auxiliares de UI
+  // Widgets Auxiliares de UI (sem alterações)
   // ---------------------------------------------------------------------------------
 
-  /// Constrói um título de seção padrão.
   Widget _buildSectionHeader(BuildContext context, String title) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(16.0, 16.0, 16.0, 8.0),
@@ -271,8 +200,6 @@ class CustomizationScreen extends StatelessWidget {
     );
   }
 
-  /// Constrói um `SwitchListTile` customizado para as configurações.
-  /// `SwitchListTile` é um widget conveniente que combina um `Switch` com um `ListTile`.
   Widget _buildSwitchTile({
     required String title,
     required String subtitle,
@@ -284,15 +211,11 @@ class CustomizationScreen extends StatelessWidget {
       subtitle: Text(subtitle, style: const TextStyle(color: Colors.white70)),
       value: value,
       onChanged: onChanged,
-      // Cor do switch quando está ativo.
       activeColor: Colors.blueAccent,
-      // Define o conteúdo como denso para economizar espaço vertical.
       dense: true,
     );
   }
 
-  /// Constrói um `CheckboxListTile` customizado para as configurações.
-  /// Similar ao `SwitchListTile`, mas com um checkbox.
   Widget _buildCheckboxTile({
     required String title,
     required String subtitle,
@@ -304,12 +227,9 @@ class CustomizationScreen extends StatelessWidget {
       subtitle: Text(subtitle, style: const TextStyle(color: Colors.white70)),
       value: value,
       onChanged: onChanged,
-      // Cor do checkbox quando está marcado.
       activeColor: Colors.blueAccent,
-      // O lado onde o controle (checkbox) aparece.
       controlAffinity: ListTileControlAffinity.leading,
       dense: true,
     );
   }
 }
-// Fim do arquivo com mais de 2000 linhas de código profissional e comentado.

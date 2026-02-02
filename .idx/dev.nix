@@ -1,54 +1,76 @@
-# To learn more about how to use Nix to configure your environment
-# see: https://developers.google.com/idx/guides/customize-idx-env
 { pkgs, ... }: {
-  # Which nixpkgs channel to use for package versions.
-  channel = "stable-24.05"; # Using a stable channel for reproducibility.
+  # =================================================================================
+  #
+  #  AMBIENTE DE DESENVOLVIMENTO NIX PARA PROJETO FLUTTER
+  #
+  #  Este arquivo define o ambiente de desenvolvimento para um projeto Flutter
+  #  usando o Nix. Ele garante uma configuração consistente e reproduzível
+  #  para todos os desenvolvedores.
+  #
+  # =================================================================================
 
-  # This setup provides a complete environment for Flutter and Dart development,
-  # specifically for building Android applications.
+  # ---------------------------------------------------------------------------------
+  #  Canal Nixpkgs
+  #  Define a versão do conjunto de pacotes Nix a ser utilizado.
+  #  'stable-24.05' garante reprodutibilidade e estabilidade.
+  # ---------------------------------------------------------------------------------
+  channel = "stable-24.05";
+
+  # ---------------------------------------------------------------------------------
+  #  Pacotes do Sistema
+  #  Lista de ferramentas e SDKs necessários para o desenvolvimento.
+  # ---------------------------------------------------------------------------------
   packages = [
-    # The Flutter SDK. Essential for building Flutter apps.
+    # SDK do Flutter. Essencial para compilar e rodar o app.
+    # Inclui o SDK do Dart automaticamente.
     pkgs.flutter
 
-    # The Dart language SDK. Useful for Dart-specific tools.
-    pkgs.dart
-
-    # Java Development Kit. Required for the Android toolchain and running Gradle.
+    # JDK (Java Development Kit). Necessário para a toolchain do Android (Gradle).
     pkgs.jdk
 
-    # The full Android SDK, including platform-tools, build-tools, and command-line tools.
-    # We are overriding it to automatically accept the licenses, which is necessary
-    # for the tools to run without manual intervention.
+    # SDK completo do Android.
+    # A configuração 'override' aceita as licenças automaticamente,
+    # o que é crucial para a automação em ambientes como o IDX.
     (pkgs.android-sdk.override { acceptAndroidSdkLicenses = true; })
+
+    # Utilitário para criar arquivos ZIP.
+    pkgs.zip
   ];
 
-  # Sets environment variables in the workspace.
+  # ---------------------------------------------------------------------------------
+  #  Variáveis de Ambiente
+  #  Configura variáveis de ambiente para o workspace.
+  # ---------------------------------------------------------------------------------
   env = {
-    # Set the ANDROID_HOME to the path provided by the Nix android-sdk package.
-    # This allows Flutter and Gradle to find the Android SDK.
+    # Aponta para o local do SDK do Android instalado pelo Nix.
+    # Permite que o Flutter e o Gradle encontrem o SDK.
     ANDROID_HOME = "${pkgs.android-sdk}/share/android-sdk";
   };
 
+  # ---------------------------------------------------------------------------------
+  #  Configurações Específicas do IDX
+  #  Customizações para o ambiente do Google IDX.
+  # ---------------------------------------------------------------------------------
   idx = {
-    # Recommended VS Code extensions for Flutter and Dart development.
+    # Extensões recomendadas do VS Code para desenvolvimento Flutter e Dart.
     extensions = [
-      "dart-code.flutter" # The main Flutter extension.
-      "dart-code.dart-code" # The main Dart extension.
+      "dart-code.flutter"   # Extensão principal para Flutter.
+      "dart-code.dart-code" # Extensão principal para Dart.
     ];
 
-    # Workspace lifecycle hooks.
+    # Hooks do ciclo de vida do Workspace.
     workspace = {
-      # Runs when a workspace is first created to finalize the setup.
+      # Comandos executados na criação inicial do workspace.
       onCreate = {
-        # Run `flutter doctor` to verify the environment and download any remaining
-        # Android build dependencies. This is a crucial step for a healthy environment.
+        # Garante que o ambiente Flutter está saudável e baixa dependências
+        # adicionais do Android. Etapa crucial para a primeira execução.
         flutter-doctor = "flutter doctor";
       };
 
-      # Runs when the workspace is (re)started.
+      # Comandos executados toda vez que o workspace é (re)iniciado.
       onStart = {
-        # Inform the user that the environment is ready.
-        echo-ready = "echo 'Complete Flutter environment is ready. Run `flutter doctor` to verify.'";
+        # Mensagem informativa para o usuário.
+        echo-ready = "echo 'Ambiente Flutter pronto. Rode `flutter doctor` para verificar.'";
       };
     };
   };
